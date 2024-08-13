@@ -77,9 +77,10 @@ impl FibonacciVerifierGadget {
 #[cfg(test)]
 mod test {
     use crate::bitcoin_script::FIB_LOG_SIZE;
-    use crate::tests_utils::report::report_bitcoin_script_size;
-    use crate::treepp::*;
     use crate::{verify_with_hints, FibonacciVerifierGadget};
+    use bitcoin_circle_stark::tests_utils::report::report_bitcoin_script_size;
+    use bitcoin_circle_stark::treepp::*;
+    use bitcoin_scriptexec::execute_script_with_witness_unlimited_stack;
     use stwo_prover::core::channel::{BWSSha256Channel, Channel};
     use stwo_prover::core::fields::m31::{BaseField, M31};
     use stwo_prover::core::fields::IntoSlice;

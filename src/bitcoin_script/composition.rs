@@ -164,11 +164,12 @@ impl FibonacciCompositionGadget {
 
 #[cfg(test)]
 mod test {
-    use crate::air::CompositionHint;
     use crate::bitcoin_script::composition::FibonacciCompositionGadget;
-    use crate::tests_utils::report::report_bitcoin_script_size;
-    use crate::treepp::*;
-    use crate::utils::get_rand_qm31;
+    use bitcoin_circle_stark::air::CompositionHint;
+    use bitcoin_circle_stark::tests_utils::report::report_bitcoin_script_size;
+    use bitcoin_circle_stark::treepp::*;
+    use bitcoin_circle_stark::utils::get_rand_qm31;
+    use bitcoin_scriptexec::execute_script;
     use itertools::Itertools;
     use rand::SeedableRng;
     use rand_chacha::ChaCha20Rng;
