@@ -31,18 +31,6 @@ use stwo_prover::core::vcs::bws_sha256_merkle::BWSSha256MerkleHasher;
 use stwo_prover::core::ColumnVec;
 use stwo_prover::examples::fibonacci::air::FibonacciAir;
 
-// pub(crate) mod treepp {
-//     pub use bitcoin_script::{define_pushable, script};
-//
-//     pub use bitcoin_scriptexec::{convert_to_witness, get_final_stack};
-//
-//     #[cfg(test)]
-//     pub use bitcoin_scriptexec::{execute_script, execute_script_with_witness_unlimited_stack};
-//
-//     define_pushable!();
-//     pub use bitcoin::ScriptBuf as Script;
-// }
-
 /// All the hints for the verifier (note: proof is also provided as a hint).
 pub struct VerifierHints {
     /// Fiat-Shamir hints.
