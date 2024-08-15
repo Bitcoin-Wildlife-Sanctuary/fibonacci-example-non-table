@@ -21,7 +21,7 @@ anyhow = "1.0.86"
 covenants-gadgets = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/covenants-gadgets" }
 clap = { version = "4.5.0", features = ["derive"] }
 colored = "2.1.0"
-bitcoin-circle-stark = {git = "https://github.com/Bitcoin-Wildlife-Sanctuary/bitcoin-circle-stark"}
+bitcoin-circle-stark = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/bitcoin-circle-stark" }
 
 [profile.dev]
 opt-level = 3

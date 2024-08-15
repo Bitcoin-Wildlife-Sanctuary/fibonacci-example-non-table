@@ -6,7 +6,7 @@ use bitcoin_circle_stark::precomputed_merkle_tree::PrecomputedMerkleTree;
 use bitcoin_circle_stark::treepp::pushable::{Builder, Pushable};
 use itertools::Itertools;
 use std::iter::zip;
-use stwo_prover::core::vcs::bws_sha256_merkle::BWSSha256MerkleHasher;
+use stwo_prover::core::vcs::sha256_merkle::Sha256MerkleHasher;
 use stwo_prover::core::{
     backend::cpu::quotients::{batch_random_coeffs, denominator_inverses},
     constraints::complex_conjugate_line_coeffs_normalized,
@@ -53,7 +53,7 @@ pub struct PrepareOutput {
 /// prepare output for quotients and verifier hints
 pub fn compute_prepare_hints(
     fs_output: &FiatShamirOutput,
-    proof: &StarkProof<BWSSha256MerkleHasher>,
+    proof: &StarkProof<Sha256MerkleHasher>,
 ) -> Result<(PrepareOutput, PrepareHints), VerificationError> {
     let column_size: Vec<u32> = fs_output
         .commitment_scheme_column_log_sizes

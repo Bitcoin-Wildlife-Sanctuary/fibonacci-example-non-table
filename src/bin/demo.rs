@@ -13,10 +13,12 @@ use fibonacci_example::quotients::compute_quotients_hints;
 use fibonacci_example::split::{FibonacciSplitInput, FibonacciSplitProgram, FibonacciSplitState};
 use fibonacci_example::FIB_LOG_SIZE;
 use std::io::Write;
-use stwo_prover::core::channel::{BWSSha256Channel, Channel};
+use stwo_prover::core::channel::Sha256Channel;
 use stwo_prover::core::fields::m31::{BaseField, M31};
 use stwo_prover::core::fields::IntoSlice;
-use stwo_prover::core::vcs::bws_sha256_hash::BWSSha256Hasher;
+use stwo_prover::core::pcs::PcsConfig;
+use stwo_prover::core::vcs::sha256_hash::Sha256Hasher;
+use stwo_prover::core::vcs::sha256_merkle::Sha256MerkleChannel;
 use stwo_prover::examples::fibonacci::Fibonacci;
 use stwo_prover::trace_generation::commit_and_prove;
 
@@ -97,20 +99,23 @@ fn main() {
         println!("================================================");
     } else {
         let fib = Fibonacci::new(FIB_LOG_SIZE, M31::reduce(443693538));
+        let config = PcsConfig::default();
 
         let trace = fib.get_trace();
-        let channel =
-            &mut BWSSha256Channel::new(BWSSha256Hasher::hash(BaseField::into_slice(&[fib
-                .air
-                .component
-                .claim])));
-        let proof = commit_and_prove(&fib.air, channel, vec![trace]).unwrap();
+        let channel = &mut Sha256Channel::default();
+        channel.update_digest(Sha256Hasher::hash(BaseField::into_slice(&[fib
+            .air
+            .component
+            .claim])));
+        let proof =
+            commit_and_prove::<_, Sha256MerkleChannel>(&fib.air, channel, vec![trace], config)
+                .unwrap();
 
-        let channel =
-            &mut BWSSha256Channel::new(BWSSha256Hasher::hash(BaseField::into_slice(&[fib
-                .air
-                .component
-                .claim])));
+        let channel = &mut Sha256Channel::default();
+        channel.update_digest(Sha256Hasher::hash(BaseField::into_slice(&[fib
+            .air
+            .component
+            .claim])));
         let (fiat_shamir_output, fiat_shamir_hints) =
             compute_fiat_shamir_hints(proof.clone(), channel, &fib.air).unwrap();
 

@@ -10,24 +10,24 @@ use itertools::Itertools;
 use stwo_prover::core::air::accumulation::PointEvaluationAccumulator;
 use stwo_prover::core::air::ComponentProvers;
 use stwo_prover::core::air::{AirProver, Component};
-use stwo_prover::core::channel::{BWSSha256Channel, Channel};
+use stwo_prover::core::channel::{Channel, Sha256Channel};
 use stwo_prover::core::circle::{CirclePoint, Coset};
 use stwo_prover::core::fields::m31::M31;
 use stwo_prover::core::fields::qm31::{SecureField, QM31};
+use stwo_prover::core::fields::secure_column::SECURE_EXTENSION_DEGREE;
 use stwo_prover::core::fri::{
     get_opening_positions, CirclePolyDegreeBound, FriConfig, FriLayerVerifier,
     FriVerificationError, FOLD_STEP,
 };
-use stwo_prover::core::pcs::{CommitmentSchemeVerifier, TreeVec};
+use stwo_prover::core::pcs::{CommitmentSchemeVerifier, PcsConfig, TreeVec};
 use stwo_prover::core::poly::line::LineDomain;
-use stwo_prover::core::proof_of_work::ProofOfWork;
 use stwo_prover::core::prover::{
     StarkProof, VerificationError, LOG_BLOWUP_FACTOR, LOG_LAST_LAYER_DEGREE_BOUND, N_QUERIES,
     PROOF_OF_WORK_BITS,
 };
 use stwo_prover::core::queries::{Queries, SparseSubCircleDomain};
-use stwo_prover::core::vcs::bws_sha256_hash::BWSSha256Hash;
-use stwo_prover::core::vcs::bws_sha256_merkle::BWSSha256MerkleHasher;
+use stwo_prover::core::vcs::sha256_hash::{Sha256Hash, Sha256Hasher};
+use stwo_prover::core::vcs::sha256_merkle::{Sha256MerkleChannel, Sha256MerkleHasher};
 use stwo_prover::core::{ColumnVec, InteractionElements, LookupValues};
 use stwo_prover::examples::fibonacci::air::FibonacciAir;
 use stwo_prover::trace_generation::AirTraceGenerator;
@@ -36,7 +36,7 @@ use stwo_prover::trace_generation::AirTraceGenerator;
 /// Hints for performing the Fiat-Shamir transform until finalizing the queries.
 pub struct FiatShamirHints {
     /// Commitments from the proof.
-    pub commitments: [BWSSha256Hash; 2],
+    pub commitments: [Sha256Hash; 2],
 
     /// random_coeff comes from adding `proof.commitments[0]` to the channel.
     pub random_coeff_hint: DrawHints,
@@ -60,7 +60,7 @@ pub struct FiatShamirHints {
     pub circle_poly_alpha_hint: DrawHints,
 
     /// fri commit and hints for deriving the folding parameter
-    pub fri_commitment_and_folding_hints: Vec<(BWSSha256Hash, DrawHints)>,
+    pub fri_commitment_and_folding_hints: Vec<(Sha256Hash, DrawHints)>,
 
     /// last layer poly (assuming only one element)
     pub last_layer: QM31,
@@ -161,18 +161,19 @@ pub struct FiatShamirOutput {
     pub last_layer: QM31,
 
     /// fri commit and hints for deriving the folding parameter
-    pub fri_commitment_and_folding_hints: Vec<(BWSSha256Hash, DrawHints)>,
+    pub fri_commitment_and_folding_hints: Vec<(Sha256Hash, DrawHints)>,
 }
 
 /// Generate Fiat Shamir hints along with fri inputs
 pub fn compute_fiat_shamir_hints(
-    proof: StarkProof<BWSSha256MerkleHasher>,
-    channel: &mut BWSSha256Channel,
+    proof: StarkProof<Sha256MerkleHasher>,
+    channel: &mut Sha256Channel,
     air: &FibonacciAir,
 ) -> Result<(FiatShamirOutput, FiatShamirHints), VerificationError> {
+    let config = PcsConfig::default();
     // Read trace commitment.
-    let mut commitment_scheme: CommitmentSchemeVerifier<BWSSha256MerkleHasher> =
-        CommitmentSchemeVerifier::new();
+    let mut commitment_scheme: CommitmentSchemeVerifier<Sha256MerkleChannel> =
+        CommitmentSchemeVerifier::new(config);
 
     let air_prover = air.to_air_prover();
     let components = ComponentProvers(air_prover.component_provers());
@@ -212,7 +213,9 @@ pub fn compute_fiat_shamir_hints(
     let masked_points = trace_sample_points.clone();
 
     // TODO(spapini): Change when we support multiple interactions.
-    let sampled_points = components.components().mask_points(oods_point);
+    let mut sampled_points = components.components().mask_points(oods_point);
+    // Add the composition polynomial mask points.
+    sampled_points.push(vec![vec![oods_point]; SECURE_EXTENSION_DEGREE]);
 
     // this step is just a reorganization of the data
     assert_eq!(sampled_points.0[0][0][0], masked_points[0][0][0]);
@@ -311,7 +314,10 @@ pub fn compute_fiat_shamir_hints(
         .into_iter()
         .enumerate()
     {
-        channel.mix_digest(proof.commitment);
+        channel.update_digest(Sha256Hasher::concat_and_hash(
+            &proof.commitment,
+            &channel.digest(),
+        ));
 
         let (folding_alpha, folding_alpha_hint) = channel.draw_felt_and_hints();
         folding_alphas.push(folding_alpha);
@@ -351,13 +357,15 @@ pub fn compute_fiat_shamir_hints(
 
     let pow_hint = PoWHint::new(
         channel.digest,
-        proof.commitment_scheme_proof.proof_of_work.nonce,
+        proof.commitment_scheme_proof.proof_of_work,
         PROOF_OF_WORK_BITS,
     );
 
     // Verify proof of work.
-    ProofOfWork::new(PROOF_OF_WORK_BITS)
-        .verify(channel, &proof.commitment_scheme_proof.proof_of_work)?;
+    channel.mix_nonce(proof.commitment_scheme_proof.proof_of_work);
+    if channel.trailing_zeros() < PROOF_OF_WORK_BITS {
+        return Err(VerificationError::ProofOfWork);
+    }
 
     let column_log_sizes = bounds
         .iter()

@@ -22,12 +22,12 @@ use crate::quotients::compute_quotients_hints;
 use bitcoin_circle_stark::treepp::pushable::{Builder, Pushable};
 use quotients::PerQueryQuotientHint;
 use stwo_prover::core::air::Air;
-use stwo_prover::core::channel::BWSSha256Channel;
+use stwo_prover::core::channel::Sha256Channel;
 use stwo_prover::core::circle::CirclePoint;
 use stwo_prover::core::fields::qm31::SecureField;
 use stwo_prover::core::pcs::TreeVec;
 use stwo_prover::core::prover::{InvalidOodsSampleStructure, StarkProof, VerificationError};
-use stwo_prover::core::vcs::bws_sha256_merkle::BWSSha256MerkleHasher;
+use stwo_prover::core::vcs::sha256_merkle::Sha256MerkleHasher;
 use stwo_prover::core::ColumnVec;
 use stwo_prover::examples::fibonacci::air::FibonacciAir;
 
@@ -65,9 +65,9 @@ impl Pushable for VerifierHints {
 
 /// A verifier program that generates hints.
 pub fn verify_with_hints(
-    proof: StarkProof<BWSSha256MerkleHasher>,
+    proof: StarkProof<Sha256MerkleHasher>,
     air: &FibonacciAir,
-    channel: &mut BWSSha256Channel,
+    channel: &mut Sha256Channel,
 ) -> Result<VerifierHints, VerificationError> {
     let (fiat_shamir_output, fiat_shamir_hints) =
         compute_fiat_shamir_hints(proof.clone(), channel, air).unwrap();
@@ -130,12 +130,13 @@ fn sampled_values_to_mask(
 
 #[cfg(test)]
 mod test {
-    use stwo_prover::core::channel::{BWSSha256Channel, Channel};
+    use stwo_prover::core::channel::Sha256Channel;
     use stwo_prover::core::fields::m31::{BaseField, M31};
     use stwo_prover::core::fields::IntoSlice;
+    use stwo_prover::core::pcs::PcsConfig;
     use stwo_prover::core::prover::StarkProof;
-    use stwo_prover::core::vcs::bws_sha256_hash::BWSSha256Hasher;
-    use stwo_prover::core::vcs::bws_sha256_merkle::BWSSha256MerkleHasher;
+    use stwo_prover::core::vcs::sha256_hash::Sha256Hasher;
+    use stwo_prover::core::vcs::sha256_merkle::{Sha256MerkleChannel, Sha256MerkleHasher};
     use stwo_prover::examples::fibonacci::Fibonacci;
     use stwo_prover::trace_generation::{commit_and_prove, commit_and_verify};
 
@@ -143,21 +144,23 @@ mod test {
     fn test_fib_prove() {
         const FIB_LOG_SIZE: u32 = 5;
         let fib = Fibonacci::new(FIB_LOG_SIZE, M31::reduce(443693538));
+        let config = PcsConfig::default();
 
         let trace = fib.get_trace();
-        let channel =
-            &mut BWSSha256Channel::new(BWSSha256Hasher::hash(BaseField::into_slice(&[fib
-                .air
-                .component
-                .claim])));
-        let proof: StarkProof<BWSSha256MerkleHasher> =
-            commit_and_prove(&fib.air, channel, vec![trace]).unwrap();
+        let channel = &mut Sha256Channel::default();
+        channel.update_digest(Sha256Hasher::hash(BaseField::into_slice(&[fib
+            .air
+            .component
+            .claim])));
+        let proof: StarkProof<Sha256MerkleHasher> =
+            commit_and_prove::<_, Sha256MerkleChannel>(&fib.air, channel, vec![trace], config)
+                .unwrap();
 
-        let channel =
-            &mut BWSSha256Channel::new(BWSSha256Hasher::hash(BaseField::into_slice(&[fib
-                .air
-                .component
-                .claim])));
-        commit_and_verify(proof, &fib.air, channel).unwrap()
+        let channel = &mut Sha256Channel::default();
+        channel.update_digest(Sha256Hasher::hash(BaseField::into_slice(&[fib
+            .air
+            .component
+            .claim])));
+        commit_and_verify::<Sha256MerkleChannel>(proof, &fib.air, channel, config).unwrap()
     }
 }

@@ -9,7 +9,7 @@ use stwo_prover::core::fft::ibutterfly;
 use stwo_prover::core::fields::m31::M31;
 use stwo_prover::core::fields::qm31::SecureField;
 use stwo_prover::core::fri::FriProof;
-use stwo_prover::core::vcs::bws_sha256_merkle::BWSSha256MerkleHasher;
+use stwo_prover::core::vcs::sha256_merkle::Sha256MerkleHasher;
 
 /// The hints for folding for each query.
 #[derive(Clone)]
@@ -29,7 +29,7 @@ impl Pushable for PerQueryFoldHints {
 
 /// Compute the hints for folding.
 pub fn compute_fold_hints(
-    fri_proof: &FriProof<BWSSha256MerkleHasher>,
+    fri_proof: &FriProof<Sha256MerkleHasher>,
     fs_output: &FiatShamirOutput,
     prepare_output: &PrepareOutput,
     quotients_output: &QuotientsOutput,

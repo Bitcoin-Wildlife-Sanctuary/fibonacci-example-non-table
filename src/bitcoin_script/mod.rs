@@ -4,7 +4,7 @@ use crate::bitcoin_script::prepare::FibonacciPrepareGadget;
 use crate::bitcoin_script::quotients::FibonacciPerQueryQuotientGadget;
 use bitcoin_circle_stark::treepp::*;
 use bitcoin_circle_stark::utils::clean_stack;
-use stwo_prover::core::channel::BWSSha256Channel;
+use stwo_prover::core::channel::Sha256Channel;
 use stwo_prover::core::prover::N_QUERIES;
 
 mod composition;
@@ -25,7 +25,7 @@ pub struct FibonacciVerifierGadget;
 
 impl FibonacciVerifierGadget {
     /// Run the verifier in the Bitcoin script.
-    pub fn run_verifier(channel: &BWSSha256Channel) -> Script {
+    pub fn run_verifier(channel: &Sha256Channel) -> Script {
         script! {
             // Run the Fiat-Shamir gadget
             { FibonacciFiatShamirGadget::run(channel) }
@@ -81,39 +81,45 @@ mod test {
     use bitcoin_circle_stark::tests_utils::report::report_bitcoin_script_size;
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_scriptexec::execute_script_with_witness_unlimited_stack;
-    use stwo_prover::core::channel::{BWSSha256Channel, Channel};
+    use stwo_prover::core::channel::Sha256Channel;
     use stwo_prover::core::fields::m31::{BaseField, M31};
     use stwo_prover::core::fields::IntoSlice;
-    use stwo_prover::core::vcs::bws_sha256_hash::BWSSha256Hasher;
+    use stwo_prover::core::pcs::PcsConfig;
+    use stwo_prover::core::vcs::sha256_hash::Sha256Hasher;
+    use stwo_prover::core::vcs::sha256_merkle::Sha256MerkleChannel;
     use stwo_prover::examples::fibonacci::Fibonacci;
     use stwo_prover::trace_generation::{commit_and_prove, commit_and_verify};
 
     #[test]
     fn test_verifier() {
         let fib = Fibonacci::new(FIB_LOG_SIZE, M31::reduce(443693538));
+        let config = PcsConfig::default();
 
         let trace = fib.get_trace();
-        let channel =
-            &mut BWSSha256Channel::new(BWSSha256Hasher::hash(BaseField::into_slice(&[fib
-                .air
-                .component
-                .claim])));
-        let proof = commit_and_prove(&fib.air, channel, vec![trace]).unwrap();
+        let channel = &mut Sha256Channel::default();
+        channel.update_digest(Sha256Hasher::hash(BaseField::into_slice(&[fib
+            .air
+            .component
+            .claim])));
+        let proof =
+            commit_and_prove::<_, Sha256MerkleChannel>(&fib.air, channel, vec![trace], config)
+                .unwrap();
 
         {
-            let channel =
-                &mut BWSSha256Channel::new(BWSSha256Hasher::hash(BaseField::into_slice(&[fib
-                    .air
-                    .component
-                    .claim])));
-            commit_and_verify(proof.clone(), &fib.air, channel).unwrap();
-        }
-
-        let channel =
-            &mut BWSSha256Channel::new(BWSSha256Hasher::hash(BaseField::into_slice(&[fib
+            let channel = &mut Sha256Channel::default();
+            channel.update_digest(Sha256Hasher::hash(BaseField::into_slice(&[fib
                 .air
                 .component
                 .claim])));
+            commit_and_verify::<Sha256MerkleChannel>(proof.clone(), &fib.air, channel, config)
+                .unwrap();
+        }
+
+        let channel = &mut Sha256Channel::default();
+        channel.update_digest(Sha256Hasher::hash(BaseField::into_slice(&[fib
+            .air
+            .component
+            .claim])));
         let channel_clone = channel.clone();
 
         let hint = verify_with_hints(proof, &fib.air, channel).unwrap();

@@ -12,7 +12,7 @@ use bitcoin_scriptexec::{profiler_end, profiler_start};
 use rust_bitcoin_m31::{
     qm31_copy, qm31_dup, qm31_equalverify, qm31_from_bottom, qm31_over, qm31_roll,
 };
-use stwo_prover::core::channel::BWSSha256Channel;
+use stwo_prover::core::channel::Sha256Channel;
 use stwo_prover::core::fields::m31::M31;
 use stwo_prover::core::poly::circle::CanonicCoset;
 use stwo_prover::core::prover::{LOG_BLOWUP_FACTOR, N_QUERIES, PROOF_OF_WORK_BITS};
@@ -52,7 +52,7 @@ impl FibonacciFiatShamirGadget {
     /// - masked points (3 * 8 = 24)
     /// - oods point (8)
     ///
-    pub fn run(channel: &BWSSha256Channel) -> Script {
+    pub fn run(channel: &Sha256Channel) -> Script {
         script! {
             // push the initial channel
             { channel.digest }
