@@ -348,12 +348,16 @@ impl CovenantProgram for FibonacciSplitProgram {
                 { FibonacciFiatShamirGadget::run(&channel) }
             };
 
-            let final_stack = get_final_stack(
-                script,
-                convert_to_witness(script! {
+            let witness = convert_to_witness(script! {
                     { *fiat_shamir_hints.clone() }
                 })
-                .unwrap(),
+                .unwrap();
+
+            println!("fiat-shamir witness size: {}", witness.len());
+
+            let final_stack = get_final_stack(
+                script,
+                witness,
             );
 
             let stack_hash = StackHash::compute(&final_stack);
@@ -382,6 +386,8 @@ impl CovenantProgram for FibonacciSplitProgram {
             .unwrap();
             witness.extend_from_slice(stack);
 
+            println!("prepare witness size: {}", witness.len());
+
             let final_stack = get_final_stack(script, witness);
 
             let stack_hash = StackHash::compute(&final_stack);
@@ -396,6 +402,7 @@ impl CovenantProgram for FibonacciSplitProgram {
             assert!(matches!(input, Self::Input::PerQuery(_, _, _)));
 
             if id <= 8 {
+                println!("step witness size: {}", old_state.stack.len());
                 Ok(Self::State {
                     pc: id + 1,
                     stack_hash: old_state.stack_hash.clone(),

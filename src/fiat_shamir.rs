@@ -183,10 +183,6 @@ pub fn compute_fiat_shamir_hints(
     let column_log_sizes = components.components().column_log_sizes();
     commitment_scheme.commit(proof.commitments[0], &column_log_sizes[0], channel);
 
-    if column_log_sizes.len() == 2 {
-        commitment_scheme.commit(proof.commitments[1], &column_log_sizes[1], channel);
-    }
-
     channel.mix_felts(
         &proof
             .lookup_values
