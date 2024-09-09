@@ -226,7 +226,7 @@ impl FibonacciFiatShamirGadget {
             { Sha256ChannelGadget::draw_numbers_with_hint(N_QUERIES, (FIB_LOG_SIZE + LOG_BLOWUP_FACTOR + 1) as usize) }
 
             // drop channel digest
-            { N_QUERIES } OP_ROLL OP_DROP
+            OP_DROP
 
             // stack:
             //    c1, oods point (8)

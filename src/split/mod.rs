@@ -349,16 +349,13 @@ impl CovenantProgram for FibonacciSplitProgram {
             };
 
             let witness = convert_to_witness(script! {
-                    { *fiat_shamir_hints.clone() }
-                })
-                .unwrap();
+                { *fiat_shamir_hints.clone() }
+            })
+            .unwrap();
 
             println!("fiat-shamir witness size: {}", witness.len());
 
-            let final_stack = get_final_stack(
-                script,
-                witness,
-            );
+            let final_stack = get_final_stack(script, witness);
 
             let stack_hash = StackHash::compute(&final_stack);
 
