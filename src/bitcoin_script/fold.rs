@@ -40,7 +40,7 @@ impl FibonacciPerQueryFoldGadget {
             { 4 + 4 + 15 + 24 + 4 + 12 + 16 + 12 + 8 + 24 + (2 + 8) * N_QUERIES + N_QUERIES - query_idx - 1 } OP_PICK
             { limb_to_be_bits_toaltstack_except_lowest_1bit(FIB_LOG_SIZE + LOG_BLOWUP_FACTOR + 1) }
 
-            // pull y inverse (last twiddle factor)
+            // pull y (last twiddle factor)
             8 OP_ROLL
 
             // local stack (4 elements):
@@ -48,9 +48,9 @@ impl FibonacciPerQueryFoldGadget {
             //    twiddle factors (14)
             //    answer_1 (qm31)
             //    answer_2 (qm31)
-            //    y inverse (1)
+            //    y (1)
 
-            // perform the inverse FFT using p.y inverse
+            // perform the inverse FFT using p.y
             { FFTGadget::ibutterfly() }
 
             // obtain circle_poly_alpha
