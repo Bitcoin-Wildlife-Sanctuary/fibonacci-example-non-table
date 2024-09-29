@@ -6,12 +6,12 @@ use clap::Parser;
 use colored::Colorize;
 use covenants_gadgets::test::SimulationInstruction;
 use covenants_gadgets::{get_script_pub_key, get_tx, CovenantInput, CovenantProgram, DUST_AMOUNT};
-use fibonacci_example::fiat_shamir::compute_fiat_shamir_hints;
-use fibonacci_example::fold::compute_fold_hints;
-use fibonacci_example::prepare::compute_prepare_hints;
-use fibonacci_example::quotients::compute_quotients_hints;
-use fibonacci_example::split::{FibonacciSplitInput, FibonacciSplitProgram, FibonacciSplitState};
-use fibonacci_example::FIB_LOG_SIZE;
+use fibonacci_example_non_table::fiat_shamir::compute_fiat_shamir_hints;
+use fibonacci_example_non_table::fold::compute_fold_hints;
+use fibonacci_example_non_table::prepare::compute_prepare_hints;
+use fibonacci_example_non_table::quotients::compute_quotients_hints;
+use fibonacci_example_non_table::split::{FibonacciSplitInput, FibonacciSplitProgram, FibonacciSplitState};
+use fibonacci_example_non_table::FIB_LOG_SIZE;
 use std::io::Write;
 use stwo_prover::core::channel::Sha256Channel;
 use stwo_prover::core::fields::m31::{BaseField, M31};
@@ -37,7 +37,10 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let amount = (2800u64 + 473977 + 325136 + 591311 * 8 + 10000) / 7 + 330 * 10;
+    let amount = (2800u64 + 474845 + 325136 + 591542 * 8 + 10000) / 7 + 330 * 10;
+    let amount_display =
+        (((amount as f64) / 1000.0 / 1000.0 / 100.0) * 10000.0).ceil() / 10000.0;
+    let amount = (amount_display * 100.0 * 1000.0 * 1000.0) as u64;
     let rest = amount - 330 - 400;
 
     if args.funding_txid.is_none() || args.initial_program_txid.is_none() {
@@ -156,7 +159,7 @@ fn main() {
             if old_state.pc == 0 {
                 Some(SimulationInstruction::<FibonacciSplitProgram> {
                     program_index: 0,
-                    fee: 67711,
+                    fee: 67835,
                     program_input: FibonacciSplitInput::FiatShamir(Box::new(
                         fiat_shamir_hints.clone(),
                     )),
@@ -174,7 +177,7 @@ fn main() {
                 let i = old_state.pc - 2;
                 Some(SimulationInstruction {
                     program_index: old_state.pc,
-                    fee: 84473,
+                    fee: 84506,
                     program_input: FibonacciSplitInput::PerQuery(
                         old_state.stack.clone(),
                         per_query_quotients_hints[i].clone(),

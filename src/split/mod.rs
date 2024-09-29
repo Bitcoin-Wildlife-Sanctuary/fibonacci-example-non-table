@@ -509,10 +509,10 @@ mod test {
                     program_input: FibonacciSplitInput::Reset,
                 })
             } else if old_state.pc == 0 {
-                total_fee.borrow_mut().add_assign(473977);
+                total_fee.borrow_mut().add_assign(474845);
                 Some(SimulationInstruction {
                     program_index: 0,
-                    fee: 473977,
+                    fee: 474845,
                     program_input: FibonacciSplitInput::FiatShamir(Box::new(
                         fiat_shamir_hints.clone(),
                     )),
@@ -528,11 +528,11 @@ mod test {
                     ),
                 })
             } else if old_state.pc >= 2 && old_state.pc <= 9 {
-                total_fee.borrow_mut().add_assign(591311);
+                total_fee.borrow_mut().add_assign(591542);
                 let i = old_state.pc - 2;
                 Some(SimulationInstruction {
                     program_index: old_state.pc,
-                    fee: 591311,
+                    fee: 591542,
                     program_input: FibonacciSplitInput::PerQuery(
                         old_state.stack.clone(),
                         per_query_quotients_hints[i].clone(),
