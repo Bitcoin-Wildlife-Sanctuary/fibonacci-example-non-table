@@ -10,7 +10,9 @@ use fibonacci_example_non_table::fiat_shamir::compute_fiat_shamir_hints;
 use fibonacci_example_non_table::fold::compute_fold_hints;
 use fibonacci_example_non_table::prepare::compute_prepare_hints;
 use fibonacci_example_non_table::quotients::compute_quotients_hints;
-use fibonacci_example_non_table::split::{FibonacciSplitInput, FibonacciSplitProgram, FibonacciSplitState};
+use fibonacci_example_non_table::split::{
+    FibonacciSplitInput, FibonacciSplitProgram, FibonacciSplitState,
+};
 use fibonacci_example_non_table::FIB_LOG_SIZE;
 use std::io::Write;
 use stwo_prover::core::channel::Sha256Channel;
@@ -38,8 +40,7 @@ fn main() {
     let args = Args::parse();
 
     let amount = (2800u64 + 474845 + 325136 + 591542 * 8 + 10000) / 7 + 330 * 10;
-    let amount_display =
-        (((amount as f64) / 1000.0 / 1000.0 / 100.0) * 10000.0).ceil() / 10000.0;
+    let amount_display = (((amount as f64) / 1000.0 / 1000.0 / 100.0) * 10000.0).ceil() / 10000.0;
     let amount = (amount_display * 100.0 * 1000.0 * 1000.0) as u64;
     let rest = amount - 330 - 400;
 
